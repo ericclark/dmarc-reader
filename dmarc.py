@@ -1,8 +1,9 @@
 import xml.etree.ElementTree as ET
 import os
+import argparse
 from html import escape
-from datetime import datetime 
-from ip2geotools.databases.noncommercial import DbIpCity 
+from datetime import datetime
+from ip2geotools.databases.noncommercial import DbIpCity
 
 def process_dmarc_report(xml_file):
     """Parses a DMARC XML report and generates an HTML report."""
@@ -47,7 +48,7 @@ def process_dmarc_report(xml_file):
         })
 
     # Local IP-Country Database Setup. This is an alternative to using the ip2geotools API. The free API has a 1000/day limit.
-    # db_path = "/path/to//IP2LOCATION-LITE-DB1.CSV" 
+    # db_path = "/path/to//IP2LOCATION-LITE-DB1.CSV"
 
     # Look up Country
     for record in records:
@@ -58,15 +59,15 @@ def process_dmarc_report(xml_file):
             country = response.country
             print(country)
         except Exception:  # Handle potential errors gracefully
-            country = "Unknown" 
+            country = "Unknown"
 
         record['country'] = country
 
     # Generate HTML
-    html_str = f""" 
+    html_str = f"""
     <h2>Org Name: {org_name}</h2>
     <p>Report ID: {report_id}</p>
-    <p>Date Range: {date_start} to {date_end}</p>  
+    <p>Date Range: {date_start} to {date_end}</p>
     <h3>Records</h3>
     <table>
         <thead>
@@ -80,32 +81,46 @@ def process_dmarc_report(xml_file):
                 <th>Header From</th>
                 <th>SPF Domain</th>
                 <th>SPF Result</th>
-            </tr> 
+            </tr>
         </thead>
         <tbody>
             { ''.join(
-                f'<tr class={"dkim-fail" if r["dkim"] == "fail" else ""} {"spf-fail" if r["spf_result"] == "fail" else ""}><td>{r["source_ip"]}</td><td>{r["country"]}</td><td>{r["count"]}</td><td>{r["disposition"]}</td><td>{r["dkim"]}</td><td>{r["spf"]}</td><td>{escape(r["header_from"])}</td><td>{r["spf_domain"]}</td><td>{r["spf_result"]}</td></tr>'  
-                for r in records)  
+                f'<tr class="{" dkim-fail" if r["dkim"] == "fail" else ""}{" spf-fail" if r["spf_result"] == "fail" else ""}"><td>{r["source_ip"]}</td><td>{r["country"]}</td><td>{r["count"]}</td><td>{r["disposition"]}</td><td>{r["dkim"]}</td><td>{r["spf"]}</td><td>{escape(r["header_from"])}</td><td>{r["spf_domain"]}</td><td>{r["spf_result"]}</td></tr>'
+                for r in records)
             }
         </tbody>
-    </table> 
+    </table>
     """
 
-    return html_str  # Return the HTML content snippet 
+    return html_str  # Return the HTML content snippet
 
-# Script Execution
-report_directory = "/home/eric/dmarc/raw"  
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process DMARC XML reports.")
+    parser.add_argument(
+        "--directory",
+        type=str,
+        default="raw",
+        help="Directory containing DMARC XML reports (default: raw)"
+    )
+    args = parser.parse_args()
 
-all_html = ""  # To store the combined HTML from all reports
+    # Script Execution
+    report_directory = args.directory
 
-for filename in os.listdir(report_directory):
-    if filename.endswith(".xml"):
-        filepath = os.path.join(report_directory, filename)
-        html_fragment = process_dmarc_report(filepath)  
-        all_html += html_fragment
+    all_html = ""  # To store the combined HTML from all reports
 
-# Complete HTML Structure
-complete_html = f"""
+    if not os.path.exists(report_directory):
+        print(f"Error: Directory '{report_directory}' does not exist.")
+        exit(1)
+
+    for filename in os.listdir(report_directory):
+        if filename.endswith(".xml"):
+            filepath = os.path.join(report_directory, filename)
+            html_fragment = process_dmarc_report(filepath)
+            all_html += html_fragment
+
+    # Complete HTML Structure
+    complete_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -119,11 +134,11 @@ complete_html = f"""
 </head>
 <body>
     <h1>Consolidated DMARC Report</h1>
-    {all_html} 
+    {all_html}
 </body>
 </html>
 """
 
-# Save the consolidated report
-with open("consolidated_report.html", "w") as f:
-    f.write(complete_html)
+    # Save the consolidated report
+    with open("consolidated_report.html", "w") as f:
+        f.write(complete_html)
