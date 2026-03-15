@@ -64,9 +64,9 @@ def process_dmarc_report(xml_file):
 
     # Generate HTML
     html_str = f""" 
-    <h2>Org Name: {org_name}</h2>
-    <p>Report ID: {report_id}</p>
-    <p>Date Range: {date_start} to {date_end}</p>  
+    <h2>Org Name: {escape(org_name)}</h2>
+    <p>Report ID: {escape(report_id)}</p>
+    <p>Date Range: {escape(date_start)} to {escape(date_end)}</p>
     <h3>Records</h3>
     <table>
         <thead>
@@ -84,7 +84,7 @@ def process_dmarc_report(xml_file):
         </thead>
         <tbody>
             { ''.join(
-                f'<tr class={"dkim-fail" if r["dkim"] == "fail" else ""} {"spf-fail" if r["spf_result"] == "fail" else ""}><td>{r["source_ip"]}</td><td>{r["country"]}</td><td>{r["count"]}</td><td>{r["disposition"]}</td><td>{r["dkim"]}</td><td>{r["spf"]}</td><td>{escape(r["header_from"])}</td><td>{r["spf_domain"]}</td><td>{r["spf_result"]}</td></tr>'  
+                f'<tr class="{"dkim-fail" if r["dkim"] == "fail" else ""} {"spf-fail" if r["spf_result"] == "fail" else ""}"><td>{escape(r["source_ip"])}</td><td>{escape(r["country"])}</td><td>{escape(r["count"])}</td><td>{escape(r["disposition"])}</td><td>{escape(r["dkim"])}</td><td>{escape(r["spf"])}</td><td>{escape(r["header_from"])}</td><td>{escape(r["spf_domain"])}</td><td>{escape(r["spf_result"])}</td></tr>'
                 for r in records)  
             }
         </tbody>
