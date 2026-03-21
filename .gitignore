@@ -1,0 +1,7 @@
+.venv/
+*.swp
+consolidated_report.html
+get-pip.py
+raw/*.xml
+raw/*.html
+*:Zone.Identifier
